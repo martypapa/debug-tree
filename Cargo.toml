@@ -1,7 +1,7 @@
 [package]
-name = "debug-tree-rs"
+name = "debug_tree"
 version = "0.1.0"
-authors = ["Marty <martypapa@gmail.com>"]
+authors = ["Marty Papamanolis <marty@mindpipess.com>"]
 edition = "2018"
 
 [dependencies]
