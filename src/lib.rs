@@ -361,7 +361,6 @@ macro_rules! dbg_branch {
 
 #[cfg(test)]
 mod test {
-    use crate::State;
     use crate::*;
     #[test]
     fn test_branch() {
