@@ -1,12 +1,9 @@
 [package]
 name = "debug_tree"
-version = "0.1.0"
+version = "0.2.0"
 authors = ["Marty Papamanolis <marty@mindpipess.com>"]
 edition = "2018"
 
 [lib]
 name = "debug_tree"
 crate-type = ["lib"]
-
-[dependencies]
-lazy_static = "1.3.0"
