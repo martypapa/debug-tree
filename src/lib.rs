@@ -4,9 +4,9 @@ mod internal;
 pub mod scoped_branch;
 mod test;
 mod tree;
+pub use default::default_tree;
 use scoped_branch::ScopedBranch;
 use tree::Tree;
-pub use default::default_tree;
 
 /// Reference wrapper for `State`
 #[derive(Debug, Clone)]
@@ -64,7 +64,7 @@ impl TreeBuilder {
     ///
     /// # Examples
     ///
-    /// Stepping out of branch when end of scope is reached.
+    /// Exiting branch when end of scope is reached.
     /// ```
     /// use debug_tree::TreeBuilder;
     /// let tree = TreeBuilder::new();
@@ -208,49 +208,160 @@ impl TreeBuilder {
         self.0.lock().unwrap().exit()
     }
 
-    /// Returns the depth of
-    pub fn depth(&self) -> usize {
-        self.0.lock().unwrap().depth()
-    }
-
-    /// Print the tree without clearing.
+    /// Returns the depth of the current branch
+    /// The initial depth when no branches have been adeed is 0.
     ///
     /// # Example
     ///
     /// ```
     /// use debug_tree::TreeBuilder;
     /// let tree = TreeBuilder::new();
-    /// tree.add_leaf("Test");
+    /// assert_eq!(0, tree.depth());
+    /// let _b = tree.add_branch("Branch");
+    /// assert_eq!(1, tree.depth());
+    /// let _b = tree.add_branch("Child branch");
+    /// assert_eq!(2, tree.depth());
+    /// ```
+    pub fn depth(&self) -> usize {
+        self.0.lock().unwrap().depth()
+    }
+
+    /// Prints the tree without clearing.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use debug_tree::TreeBuilder;
+    /// let tree = TreeBuilder::new();
+    /// tree.add_leaf("Leaf");
     /// tree.peek_print();
+    /// // Leaf
+    /// tree.peek_print();
+    /// // Leaf
+    /// // Leaf 2
     /// ```
     pub fn peek_print(&self) {
         self.0.lock().unwrap().peek_print();
     }
 
-    /// Print the tree and then clear.
+    /// Prints the tree and then clears it.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use debug_tree::TreeBuilder;
+    /// let tree = TreeBuilder::new();
+    /// tree.add_leaf("Leaf");
+    /// tree.flush_print();
+    /// // Leaf
+    /// tree.add_leaf("Leaf 2");
+    /// tree.flush_print();
+    /// // Leaf 2
+    /// ```
     pub fn flush_print(&self) {
         self.0.lock().unwrap().flush_print();
     }
 
-    /// Return the stringified tree without clearing.
+    /// Returns the tree as a string without clearing the tree.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use debug_tree::TreeBuilder;
+    /// let tree = TreeBuilder::new();
+    /// tree.add_leaf("Leaf");
+    /// assert_eq!("Leaf", tree.peek_string());
+    /// tree.add_leaf("Leaf 2");
+    /// assert_eq!("Leaf\nLeaf 2", tree.peek_string());
+    /// ```
     pub fn peek_string(&self) -> String {
         self.0.lock().unwrap().peek_string()
     }
-    /// Return the stringified tree and then clear.
+
+    /// Returns the tree as a string and clears the tree.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use debug_tree::TreeBuilder;
+    /// let tree = TreeBuilder::new();
+    /// tree.add_leaf("Leaf");
+    /// assert_eq!("Leaf", tree.flush_string());
+    /// tree.add_leaf("Leaf 2");
+    /// assert_eq!("Leaf 2", tree.flush_string());
+    /// ```
     pub fn flush_string(&self) -> String {
         self.0.lock().unwrap().flush_string()
     }
 
-    /// Clear the tree.
+    /// Clears the tree.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use debug_tree::TreeBuilder;
+    /// let tree = TreeBuilder::new();
+    /// tree.add_leaf("Leaf");
+    /// assert_eq!("Leaf", tree.peek_string());
+    /// tree.clear();
+    /// assert_eq!("", tree.peek_string());
+    /// ```
     pub fn clear(&self) {
         self.0.lock().unwrap().clear()
     }
 }
 
+/// Adds a leaf to given tree with the given text and formatting arguments
+///
+/// # Arguments
+/// * `tree` - The tree that the leaf should be added to
+/// * `text...` - Formatted text arguments, as per `format!(...)`.
+///
+/// # Example
+///
+/// ```
+/// #[macro_use]
+/// extern crate debug_tree;
+/// use debug_tree::TreeBuilder;
+/// fn main() {
+///     let tree = TreeBuilder::new();
+///     add_leaf_to!(tree, "A {} leaf", "new");
+///     assert_eq!("A new leaf", &tree.peek_string());
+/// }
+/// ```
 #[macro_export]
 macro_rules! add_leaf_to {
     ($state:tt, $($arg:tt)*) => ($state.add_leaf(&format!($($arg)*)));
 }
+
+/// Adds a scoped branch to given tree with the given text and formatting arguments
+/// The branch will be exited at the end of the current block.
+///
+/// # Arguments
+/// * `tree` - The tree that the leaf should be added to
+/// * `text...` - Formatted text arguments, as per `format!(...)`.
+///
+/// # Example
+///
+/// ```
+/// #[macro_use]
+/// extern crate debug_tree;
+/// use debug_tree::TreeBuilder;
+/// fn main() {
+///     let tree = TreeBuilder::new();
+///     {
+///         add_branch_to!(tree, "New {}", "Branch"); // _branch enters scope
+///         // tree is now pointed inside new branch.
+///         add_leaf_to!(tree, "Child of {}", "Branch");
+///         // Block ends, so tree exits the current branch.
+///     }
+///     add_leaf_to!(tree, "Sibling of {}", "Branch");
+///     assert_eq!("\
+/// New Branch
+/// └╼ Child of Branch
+/// Sibling of Branch" , &tree.flush_string());
+/// }
+/// ```
 #[macro_export]
 macro_rules! add_branch_to {
     ($arg:tt) => {

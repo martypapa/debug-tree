@@ -65,6 +65,18 @@ mod test {
         d.add_leaf("Hi");
         assert_eq!("Hi", d.flush_string());
     }
+
+    #[test]
+    fn depth() {
+        let d = TreeBuilder::new();
+        assert_eq!(0, d.depth());
+        d.add_leaf("Hi");
+        assert_eq!(0, d.depth());
+        let _b = d.add_branch("Hi");
+        assert_eq!(1, d.depth());
+        d.add_leaf("Hi");
+        assert_eq!(1, d.depth());
+    }
     #[test]
     fn indent() {
         let d = TreeBuilder::new();

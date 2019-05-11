@@ -88,7 +88,7 @@ impl TreeBuilderBase {
     }
 
     pub fn depth(&self) -> usize {
-        self.path.len() - 1
+        self.path.len() + self.dive_count - 1
     }
 
     pub fn peek_print(&self) {

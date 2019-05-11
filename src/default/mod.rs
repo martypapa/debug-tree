@@ -1,5 +1,16 @@
 use crate::scoped_branch::ScopedBranch;
 use crate::TreeBuilder;
+
+/// Returns the default tree for the current thread
+///
+/// # Example
+///
+/// ```
+/// use debug_tree::default_tree;
+/// default_tree().add_leaf("A new leaf");
+/// assert_eq!("A new leaf", default_tree().peek_string());
+/// ```
+#[macro_export]
 pub fn default_tree() -> TreeBuilder {
     thread_local! {
         static DEFAULT_BUILDER: TreeBuilder = TreeBuilder::new();
@@ -7,10 +18,53 @@ pub fn default_tree() -> TreeBuilder {
     DEFAULT_BUILDER.with(|f| f.clone())
 }
 
+/// Adds a leaf to the default tree with the given text and formatting arguments
+///
+/// # Arguments
+/// * `text...` - Formatted text arguments, as per `format!(...)`.
+///
+/// # Example
+///
+/// ```
+/// #[macro_use]
+/// extern crate debug_tree;
+/// use debug_tree::default_tree;
+/// fn main() {
+///     add_leaf!(tree, "A {} leaf", "new");
+///     assert_eq!("A new leaf", &default_tree().peek_string());
+/// }
+/// ```
 #[macro_export]
 macro_rules! add_leaf {
         ($($arg:tt)*) => ($crate::default_tree().add_leaf(&format!($($arg)*)));
     }
+
+/// Adds a scoped branch to the default tree with the given text and formatting arguments
+/// The branch will be exited at the end of the current block.
+///
+/// # Arguments
+/// * `text...` - Formatted text arguments, as per `format!(...)`.
+///
+/// # Example
+///
+/// ```
+/// #[macro_use]
+/// extern crate debug_tree;
+/// use debug_tree::default_tree;
+/// fn main() {
+///     {
+///         add_branch!("New {}", "Branch"); // _branch enters scope
+///         // tree is now pointed inside new branch.
+///         add_leaf!("Child of {}", "Branch");
+///         // Block ends, so tree exits the current branch.
+///     }
+///     add_leaf!("Sibling of {}", "Branch");
+///     assert_eq!("\
+/// Branch
+/// └╼ Child of Branch
+/// Sibling of Branch" , &default_tree().flush_string());
+/// }
+/// ```
 #[macro_export]
 macro_rules! add_branch {
     () => {

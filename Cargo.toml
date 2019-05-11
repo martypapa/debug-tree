@@ -1,8 +1,11 @@
 [package]
 name = "debug_tree"
-version = "0.2.0"
+version = "0.2.1"
 authors = ["Marty Papamanolis <marty@mindpipess.com>"]
 edition = "2018"
+repository = "https://github.com/martypapa/debug-tree"
+readme = "README.md"
+license = "MIT"
 
 [lib]
 name = "debug_tree"
