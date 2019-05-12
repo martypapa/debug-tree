@@ -6,6 +6,7 @@ edition = "2018"
 repository = "https://github.com/martypapa/debug-tree"
 readme = "README.md"
 license = "MIT"
+description = "Build a tree one element at a time and output it as a pretty string."
 
 [lib]
 name = "debug_tree"

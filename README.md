@@ -1,6 +1,6 @@
 Debug Tree
 ===========
-This library allows you to build a tree one element at a time and output as a pretty tree string. This is particularly convenient for generating clean output from nested and recursive functions. A design goal was to allow this library to be used as a drop-in replacement of `println!(...)`. 
+This library allows you to build a tree one element at a time and output it as a pretty string. This is particularly convenient for generating clean output from nested and recursive functions. A design goal was to allow this library to be used as a drop-in replacement of `println!(...)`. 
 
 Simple Usage
 --------
