@@ -2,42 +2,75 @@ Debug Tree
 ===========
 This library allows you to build a tree one element at a time and output it as a pretty string. This is particularly convenient for generating clean output from nested and recursive functions. A design goal was to allow this library to be used as a drop-in replacement of `println!(...)`. 
 
-Simple Usage
+Recursive Example
 --------
+By adding the `add_branch!(...)` macro at the start of a recursive function, you can see the entire call tree, instantly.
 ```rust
-#[macro_use]
-extern crate debug_tree;
-use debug_tree::default_tree;
+use debug_tree::{default_tree, add_branch, add_leaf};
+fn factors(x: usize) {
+    add_branch!("{}", x);
+    for i in 1..x {
+        if x % i == 0 {
+            factors(i);
+        }
+    }
+}
 fn main() {
-    {
-        add_branch!("{} Branch", "1"); // Enter branch 1
-        // tree is now pointed inside new branch.
-        add_leaf!("{} Child", "1.1");
-    } // Exit branch because scope ends.
-    add_leaf!("2 Sibling");
+    factors(6);
     default_tree().flush_print();
 }
 ```
-
 ```
-1 Branch
-└╼ 1.1 Child
-2 Sibling
- ```
+6
+├╼ 1
+├╼ 2
+│ └╼ 1
+└╼ 3
+ └╼ 1
+```
+
+Nested Example
+---------------
+Branches also make nested function calls a lot easier to follow.
+```rust
+use debug_tree::{default_tree, add_branch, add_leaf};
+fn a() {
+    add_branch!("a");
+    b();
+    c();
+}
+fn b() {
+    add_branch!("b");
+    c();
+}
+fn c() {
+    add_branch!("c");
+    add_leaf!("Nothing to see here");
+}
+
+fn main() {
+    a();
+    default_tree().flush_print();
+}
+```
+```
+a
+├╼ b
+│ └╼ c
+│   └╼ Nothing to see here
+└╼ c
+  └╼ Nothing to see here
+```
 
 Line Breaks
 ---------
 Newlines in multi-line strings are automatically indented.
 ```rust
-#[macro_use]
-extern crate debug_tree;
-use debug_tree::default_tree;
+use debug_tree::{default_tree, add_branch, add_leaf};
 fn main() {
-    {
-        add_branch!("1");
-        add_leaf!("1.1\nNext line");
-    }
-    add_leaf!(&format!("1.2"));
+    add_branch!("1");
+    add_leaf!("1.1\nNext line");
+    add_leaf!("1.2");
     default_tree().flush_print();
 }
 ```
@@ -51,8 +84,8 @@ fn main() {
 
 Non-Macro Version
 ------------
+In the case that multiple trees are needed, the trees can be created manually without the helper macros.
 ```rust
-extern crate debug_tree;
 use debug_tree::TreeBuilder;
 fn main() {
     // Make a new tree.

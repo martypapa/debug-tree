@@ -20,15 +20,6 @@ impl TreeBuilderBase {
             indent: 2,
         }
     }
-    /// Create a new state from an existing tree.
-    pub fn from_tree(tree: Arc<Mutex<Tree>>) -> TreeBuilderBase {
-        TreeBuilderBase {
-            data: tree.clone(),
-            path: vec![],
-            dive_count: 1,
-            indent: 2,
-        }
-    }
 
     pub fn set_indentation(&mut self, indent: usize) {
         self.indent = indent;

@@ -1,4 +1,3 @@
-use crate::scoped_branch::ScopedBranch;
 use crate::TreeBuilder;
 
 /// Returns the default tree for the current thread
@@ -10,7 +9,6 @@ use crate::TreeBuilder;
 /// default_tree().add_leaf("A new leaf");
 /// assert_eq!("A new leaf", default_tree().peek_string());
 /// ```
-#[macro_export]
 pub fn default_tree() -> TreeBuilder {
     thread_local! {
         static DEFAULT_BUILDER: TreeBuilder = TreeBuilder::new();
@@ -27,8 +25,7 @@ pub fn default_tree() -> TreeBuilder {
 ///
 /// ```
 /// #[macro_use]
-/// extern crate debug_tree;
-/// use debug_tree::default_tree;
+/// use debug_tree::{default_tree, add_leaf};
 /// fn main() {
 ///     add_leaf!(tree, "A {} leaf", "new");
 ///     assert_eq!("A new leaf", &default_tree().peek_string());
@@ -49,8 +46,7 @@ macro_rules! add_leaf {
 ///
 /// ```
 /// #[macro_use]
-/// extern crate debug_tree;
-/// use debug_tree::default_tree;
+/// use debug_tree::{default_tree, add_branch, add_leaf};
 /// fn main() {
 ///     {
 ///         add_branch!("New {}", "Branch"); // _branch enters scope

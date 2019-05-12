@@ -152,4 +152,58 @@ mod test {
             d.flush_string()
         );
     }
+
+    fn factors(x: usize) {
+        add_branch!("{}", x);
+        for i in 1..x {
+            if x % i == 0 {
+                factors(i);
+            }
+        }
+    }
+    #[test]
+    fn recursive() {
+        factors(6);
+        default_tree().peek_print();
+        assert_eq!(
+            "\
+6
+├╼ 1
+├╼ 2
+│ └╼ 1
+└╼ 3
+  └╼ 1",
+            default_tree().flush_string()
+        );
+    }
+
+    fn a() {
+        add_branch!("a");
+        b();
+        c();
+    }
+    fn b() {
+        add_branch!("b");
+        c();
+    }
+    fn c() {
+        add_branch!("c");
+        add_leaf!("Nothing to see here");
+    }
+
+    #[test]
+    fn nested() {
+        a();
+        default_tree().peek_print();
+        assert_eq!(
+            "\
+a
+├╼ b
+│ └╼ c
+│   └╼ Nothing to see here
+└╼ c
+  └╼ Nothing to see here",
+            default_tree().flush_string()
+        );
+    }
 }

@@ -6,7 +6,6 @@ mod test;
 mod tree;
 pub use default::default_tree;
 use scoped_branch::ScopedBranch;
-use tree::Tree;
 
 /// Reference wrapper for `State`
 #[derive(Debug, Clone)]
@@ -24,16 +23,6 @@ impl TreeBuilder {
     pub fn new() -> TreeBuilder {
         TreeBuilder {
             0: Arc::new(Mutex::new(internal::TreeBuilderBase::new())),
-        }
-    }
-
-    /// Returns a new `TreeBuilder`, for an existing `Tree`.
-    /// The `TreeBuilder` will be positioned on the same branch as the current tree
-    pub(crate) fn from_tree(tree: Arc<Mutex<Tree>>) -> TreeBuilder {
-        TreeBuilder {
-            0: Arc::new(Mutex::new(internal::TreeBuilderBase::from_tree(
-                tree.clone(),
-            ))),
         }
     }
 
@@ -321,8 +310,7 @@ impl TreeBuilder {
 ///
 /// ```
 /// #[macro_use]
-/// extern crate debug_tree;
-/// use debug_tree::TreeBuilder;
+/// use debug_tree::{TreeBuilder, add_leaf_to};
 /// fn main() {
 ///     let tree = TreeBuilder::new();
 ///     add_leaf_to!(tree, "A {} leaf", "new");
@@ -345,8 +333,7 @@ macro_rules! add_leaf_to {
 ///
 /// ```
 /// #[macro_use]
-/// extern crate debug_tree;
-/// use debug_tree::TreeBuilder;
+/// use debug_tree::{TreeBuilder, add_branch_to, add_leaf_to};
 /// fn main() {
 ///     let tree = TreeBuilder::new();
 ///     {
