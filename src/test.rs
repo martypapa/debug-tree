@@ -114,6 +114,14 @@ mod test {
         );
     }
     #[test]
+    fn leaf_with_value() {
+        let d = TreeBuilder::new();
+        let value = add_leaf_value_to!(d, 1);
+        d.peek_print();
+        assert_eq!("1", d.flush_string());
+        assert_eq!(1, value);
+    }
+    #[test]
     fn macros2() {
         let d = TreeBuilder::new();
         add_branch_to!(d, "1");

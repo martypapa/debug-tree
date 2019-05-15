@@ -322,6 +322,33 @@ macro_rules! add_leaf_to {
     ($state:tt, $($arg:tt)*) => ($state.add_leaf(&format!($($arg)*)));
 }
 
+/// Adds a leaf to given tree with the given `value` argument
+///
+/// # Arguments
+/// * `tree` - The tree that the leaf should be added to
+/// * `value` - An expression that implements the `Display` trait.
+///
+/// # Example
+///
+/// ```
+/// #[macro_use]
+/// use debug_tree::{TreeBuilder, add_leaf_value_to};
+/// fn main() {
+///     let tree = TreeBuilder::new();
+///     let value = add_leaf_value_to!(tree, 5 * 4 * 3 * 2);
+///     assert_eq!(120, value);
+///     assert_eq!("120", &tree.peek_string());
+/// }
+/// ```
+#[macro_export]
+macro_rules! add_leaf_value_to {
+    ($state:tt, $value:expr) => {{
+        let v = $value;
+        $state.add_leaf(&format!("{}", &v));
+        v
+    }};
+}
+
 /// Adds a scoped branch to given tree with the given text and formatting arguments
 /// The branch will be exited at the end of the current block.
 ///
@@ -352,9 +379,9 @@ macro_rules! add_leaf_to {
 #[macro_export]
 macro_rules! add_branch_to {
     ($arg:tt) => {
-        let _l = $arg.enter_scoped();
+        let _debug_tree_branch = $arg.enter_scoped();
     };
     ($state:tt, $($arg:tt)*) => {
-        let _l = $state.add_branch(&format!($($arg)*));
+        let _debug_tree_branch = $state.add_branch(&format!($($arg)*));
     };
 }

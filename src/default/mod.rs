@@ -27,7 +27,7 @@ pub fn default_tree() -> TreeBuilder {
 /// #[macro_use]
 /// use debug_tree::{default_tree, add_leaf};
 /// fn main() {
-///     add_leaf!(tree, "A {} leaf", "new");
+///     add_leaf!("A {} leaf", "new");
 ///     assert_eq!("A new leaf", &default_tree().peek_string());
 /// }
 /// ```
@@ -35,6 +35,33 @@ pub fn default_tree() -> TreeBuilder {
 macro_rules! add_leaf {
         ($($arg:tt)*) => ($crate::default_tree().add_leaf(&format!($($arg)*)));
     }
+
+/// Adds the value as a leaf to the default tree.
+///
+/// Returns the given `value` argument.
+///
+/// # Arguments
+/// * `value` - An expression that implements the `Display` trait.
+///
+/// # Example
+///
+/// ```
+/// #[macro_use]
+/// use debug_tree::{default_tree, add_leaf};
+/// fn main() {
+///     let value = add_leaf_value!(10);
+///     assert_eq!("10", &default_tree().flush_string());
+///     assert_eq!(10, value);
+/// }
+/// ```
+#[macro_export]
+macro_rules! add_leaf_value {
+    ($value:expr) => {{
+        let v = $value;
+        $crate::default_tree().add_leaf(&format!("{}", &v));
+        v
+    }};
+}
 
 /// Adds a scoped branch to the default tree with the given text and formatting arguments
 /// The branch will be exited at the end of the current block.
@@ -64,10 +91,10 @@ macro_rules! add_leaf {
 #[macro_export]
 macro_rules! add_branch {
     () => {
-        let _l = $crate::default_tree().enter_scoped();
+        let _debug_tree_branch = $crate::default_tree().enter_scoped();
     };
     ($($arg:tt)*) => {
-        let _l = $crate::default_tree().add_branch(&format!($($arg)*));
+        let _debug_tree_branch = $crate::default_tree().add_branch(&format!($($arg)*));
     };
 
 }
@@ -114,6 +141,14 @@ mod test {
 └╼ 11.2",
             default_tree().flush_string()
         );
+    }
+
+    #[test]
+    fn leaf_with_value() {
+        let value = add_leaf_value!(10);
+        default_tree().peek_print();
+        assert_eq!("10", default_tree().flush_string());
+        assert_eq!(10, value);
     }
 
 }
