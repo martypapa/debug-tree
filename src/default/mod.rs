@@ -33,7 +33,11 @@ pub fn default_tree() -> TreeBuilder {
 /// ```
 #[macro_export]
 macro_rules! add_leaf {
-        ($($arg:tt)*) => ($crate::default_tree().add_leaf(&format!($($arg)*)));
+        ($($arg:tt)*) => {
+            if $crate::default_tree().is_enabled() {
+                $crate::default_tree().add_leaf(&format!($($arg)*))
+            }
+        };
     }
 
 /// Adds the value as a leaf to the default tree.
@@ -58,7 +62,9 @@ macro_rules! add_leaf {
 macro_rules! add_leaf_value {
     ($value:expr) => {{
         let v = $value;
-        $crate::default_tree().add_leaf(&format!("{}", &v));
+        if $crate::default_tree().is_enabled() {
+            $crate::default_tree().add_leaf(&format!("{}", &v));
+        }
         v
     }};
 }
@@ -91,10 +97,18 @@ macro_rules! add_leaf_value {
 #[macro_export]
 macro_rules! add_branch {
     () => {
-        let _debug_tree_branch = $crate::default_tree().enter_scoped();
+        let _debug_tree_branch = if $crate::default_tree().is_enabled() {
+            $crate::default_tree().enter_scoped()
+        } else {
+            $crate::scoped_branch::ScopedBranch::none()
+        };
     };
     ($($arg:tt)*) => {
-        let _debug_tree_branch = $crate::default_tree().add_branch(&format!($($arg)*));
+        let _debug_tree_branch = if $crate::default_tree().is_enabled() {
+            $crate::default_tree().add_branch(&format!($($arg)*))
+        } else {
+            $crate::scoped_branch::ScopedBranch::none()
+        };
     };
 
 }

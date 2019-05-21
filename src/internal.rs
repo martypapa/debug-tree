@@ -8,6 +8,7 @@ pub(crate) struct TreeBuilderBase {
     path: Vec<usize>,
     dive_count: usize,
     indent: usize,
+    is_enabled: bool,
 }
 
 impl TreeBuilderBase {
@@ -18,7 +19,15 @@ impl TreeBuilderBase {
             path: vec![],
             dive_count: 1,
             indent: 2,
+            is_enabled: true,
         }
+    }
+
+    pub fn set_enabled(&mut self, enabled: bool) {
+        self.is_enabled = enabled;
+    }
+    pub fn is_enabled(&self) -> bool {
+        self.is_enabled
     }
 
     pub fn set_indentation(&mut self, indent: usize) {

@@ -138,7 +138,11 @@ impl TreeBuilder {
     /// Sibling of Branch", &tree.flush_string());
     /// ```
     pub fn enter_scoped(&self) -> ScopedBranch {
-        ScopedBranch::new(self.clone())
+        if self.is_enabled() {
+            ScopedBranch::new(self.clone())
+        } else {
+           ScopedBranch::none()
+        }
     }
 
     /// Adds a leaf to current branch with the given text, `text`.
@@ -154,7 +158,10 @@ impl TreeBuilder {
     /// tree.add_leaf("New leaf");
     /// ```
     pub fn add_leaf(&self, text: &str) {
-        self.0.lock().unwrap().add_leaf(&text);
+        let mut x = self.0.lock().unwrap();
+        if x.is_enabled() {
+            x.add_leaf(&text);
+        }
     }
 
     /// Steps into a new child branch.
@@ -172,7 +179,10 @@ impl TreeBuilder {
     /// └╼ Child of Branch", &tree.flush_string());
     /// ```
     pub fn enter(&self) {
-        self.0.lock().unwrap().enter();
+        let mut x = self.0.lock().unwrap();
+        if x.is_enabled() {
+            x.enter();
+        }
     }
 
     /// Exits the current branch, to the parent branch.
@@ -194,7 +204,12 @@ impl TreeBuilder {
     /// Sibling of Branch", &tree.flush_string());
     /// ```
     pub fn exit(&self) -> bool {
-        self.0.lock().unwrap().exit()
+        let mut x = self.0.lock().unwrap();
+        if x.is_enabled() {
+            x.exit()
+        } else {
+            false
+        }
     }
 
     /// Returns the depth of the current branch
@@ -298,6 +313,42 @@ impl TreeBuilder {
     pub fn clear(&self) {
         self.0.lock().unwrap().clear()
     }
+
+    /// Sets the enabled state of the tree.
+    ///
+    /// If not enabled, the tree will not be modified by adding leaves or branches.
+    /// Additionally, if called using the `add_`... macros, arguments will not be processed.
+    /// This is particularly useful for suppressing output in production, with very little overhead.
+    ///
+    /// # Example
+    /// ```
+    /// #[macro_use]
+    /// use debug_tree::{TreeBuilder, add_leaf_to};
+    /// let mut tree = TreeBuilder::new();
+    /// tree.add_leaf("Leaf 1");
+    /// tree.set_enabled(false);
+    /// add_leaf_to!(tree, "Leaf 2");
+    /// tree.set_enabled(true);
+    /// add_leaf_to!(tree, "Leaf 3");
+    /// assert_eq!("Leaf 1\nLeaf 3", tree.peek_string());
+    /// ```
+    pub fn set_enabled(&self, enabled: bool) {
+        self.0.lock().unwrap().set_enabled(enabled);
+    }
+
+    /// Returns the enabled state of the tree.
+    ///
+    /// # Example
+    /// ```
+    /// use debug_tree::TreeBuilder;
+    /// let mut tree = TreeBuilder::new();
+    /// assert_eq!(true, tree.is_enabled());
+    /// tree.set_enabled(false);
+    /// assert_eq!(false, tree.is_enabled());
+    /// ```
+    pub fn is_enabled(&self) -> bool {
+        self.0.lock().unwrap().is_enabled()
+    }
 }
 
 /// Adds a leaf to given tree with the given text and formatting arguments
@@ -319,7 +370,7 @@ impl TreeBuilder {
 /// ```
 #[macro_export]
 macro_rules! add_leaf_to {
-    ($state:tt, $($arg:tt)*) => ($state.add_leaf(&format!($($arg)*)));
+    ($state:tt, $($arg:tt)*) => (if $state.is_enabled() { $state.add_leaf(&format!($($arg)*))});
 }
 
 /// Adds a leaf to given tree with the given `value` argument
@@ -344,7 +395,9 @@ macro_rules! add_leaf_to {
 macro_rules! add_leaf_value_to {
     ($state:tt, $value:expr) => {{
         let v = $value;
-        $state.add_leaf(&format!("{}", &v));
+        if $state.is_enabled() {
+            $state.add_leaf(&format!("{}", &v));
+        }
         v
     }};
 }
@@ -379,9 +432,17 @@ macro_rules! add_leaf_value_to {
 #[macro_export]
 macro_rules! add_branch_to {
     ($arg:tt) => {
-        let _debug_tree_branch = $arg.enter_scoped();
+        let _debug_tree_branch = if $arg.is_enabled() {
+            $arg.enter_scoped()
+        } else {
+            $crate::scoped_branch::ScopedBranch::none()
+        };
     };
     ($state:tt, $($arg:tt)*) => {
-        let _debug_tree_branch = $state.add_branch(&format!($($arg)*));
+        let _debug_tree_branch = if $state.is_enabled() {
+            $state.add_branch(&format!($($arg)*))
+        } else {
+            $crate::scoped_branch::ScopedBranch::none()
+        };
     };
 }

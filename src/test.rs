@@ -214,4 +214,37 @@ a
             default_tree().flush_string()
         );
     }
+
+    #[test]
+    fn disabled_output() {
+        let tree = TreeBuilder::new();
+        tree.set_enabled(false);
+        add_leaf_to!(tree, "Leaf");
+        tree.add_leaf("Leaf");
+
+        add_branch_to!(tree, "Branch");
+        tree.add_branch("Branch");
+        assert_eq!("", tree.flush_string());
+    }
+    #[test]
+    fn enabled_output() {
+        let tree = TreeBuilder::new();
+        tree.set_enabled(false);
+        add_branch_to!(tree, "Ignored branch");
+        add_leaf_to!(tree, "Ignored leaf");
+        tree.set_enabled(true);
+        add_leaf_to!(tree, "Leaf");
+        tree.add_leaf("Leaf");
+
+        add_branch_to!(tree, "Branch");
+        tree.add_branch("Branch");
+        assert_eq!(
+            "\
+Leaf
+Leaf
+Branch
+└╼ Branch",
+            tree.flush_string()
+        );
+    }
 }

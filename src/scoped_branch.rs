@@ -9,6 +9,9 @@ impl ScopedBranch {
         state.enter();
         ScopedBranch { state: Some(state) }
     }
+    pub fn none() -> ScopedBranch {
+        ScopedBranch { state: None }
+    }
     pub fn release(&mut self) {
         if let Some(x) = &self.state {
             x.exit();
