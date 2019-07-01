@@ -51,7 +51,7 @@ macro_rules! add_leaf {
 ///
 /// ```
 /// #[macro_use]
-/// use debug_tree::{default_tree, add_leaf};
+/// use debug_tree::{default_tree, add_leaf_value};
 /// fn main() {
 ///     let value = add_leaf_value!(10);
 ///     assert_eq!("10", &default_tree().flush_string());
@@ -89,7 +89,7 @@ macro_rules! add_leaf_value {
 ///     }
 ///     add_leaf!("Sibling of {}", "Branch");
 ///     assert_eq!("\
-/// Branch
+/// New Branch
 /// └╼ Child of Branch
 /// Sibling of Branch" , &default_tree().flush_string());
 /// }

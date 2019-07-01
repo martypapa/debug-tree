@@ -370,7 +370,7 @@ impl TreeBuilder {
 /// ```
 #[macro_export]
 macro_rules! add_leaf_to {
-    ($state:tt, $($arg:tt)*) => (if $state.is_enabled() { $state.add_leaf(&format!($($arg)*))});
+    ($state:expr, $($arg:tt)*) => (if $state.is_enabled() { $state.add_leaf(&format!($($arg)*))});
 }
 
 /// Adds a leaf to given tree with the given `value` argument
@@ -393,7 +393,7 @@ macro_rules! add_leaf_to {
 /// ```
 #[macro_export]
 macro_rules! add_leaf_value_to {
-    ($state:tt, $value:expr) => {{
+    ($state:expr, $value:expr) => {{
         let v = $value;
         if $state.is_enabled() {
             $state.add_leaf(&format!("{}", &v));
@@ -431,14 +431,14 @@ macro_rules! add_leaf_value_to {
 /// ```
 #[macro_export]
 macro_rules! add_branch_to {
-    ($arg:tt) => {
+    ($arg:expr) => {
         let _debug_tree_branch = if $arg.is_enabled() {
             $arg.enter_scoped()
         } else {
             $crate::scoped_branch::ScopedBranch::none()
         };
     };
-    ($state:tt, $($arg:tt)*) => {
+    ($state:expr, $($arg:tt)*) => {
         let _debug_tree_branch = if $state.is_enabled() {
             $state.add_branch(&format!($($arg)*))
         } else {

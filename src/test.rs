@@ -112,6 +112,23 @@ mod test {
 └╼ 1.1",
             d.flush_string()
         );
+    }    #[test]
+
+    fn macros_with_fn() {
+        let d = TreeBuilder::new();
+        let tree = || d.clone();
+        add_leaf_to!(tree(), "1");
+        {
+            add_branch_to!(tree());
+            add_leaf_to!(tree(), "1.1")
+        }
+        tree().peek_print();
+        assert_eq!(
+            "\
+1
+└╼ 1.1",
+            d.flush_string()
+        );
     }
     #[test]
     fn leaf_with_value() {
