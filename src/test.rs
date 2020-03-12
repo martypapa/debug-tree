@@ -1,6 +1,8 @@
 #[cfg(test)]
 mod test {
     use crate::*;
+    use std::fs::{create_dir, read_to_string, remove_file};
+
     #[test]
     fn test_branch() {
         let d: TreeBuilder = TreeBuilder::new();
@@ -25,9 +27,10 @@ mod test {
 3
 ├╼ 3.1
 └╼ 3.2",
-            d.flush_string()
+            d.string()
         );
     }
+
     #[test]
     fn test_branch2() {
         let d = TreeBuilder::new();
@@ -55,7 +58,7 @@ mod test {
 2
 └╼ 2.1
   └╼ 2.1.1",
-            d.flush_string()
+            d.string()
         );
     }
 
@@ -63,7 +66,7 @@ mod test {
     fn simple() {
         let d = TreeBuilder::new();
         d.add_leaf("Hi");
-        assert_eq!("Hi", d.flush_string());
+        assert_eq!("Hi", d.string());
     }
 
     #[test]
@@ -77,6 +80,7 @@ mod test {
         d.add_leaf("Hi");
         assert_eq!(1, d.depth());
     }
+
     #[test]
     fn indent() {
         let d = TreeBuilder::new();
@@ -87,16 +91,17 @@ mod test {
             add_branch_to!(d);
             d.add_leaf("1.1.1");
         }
-        d.set_indentation(4);
+        d.set_config_override(TreeConfig::new().indent(4));
         d.peek_print();
         assert_eq!(
             "\
 1
 └──╼ 1.1
     └──╼ 1.1.1",
-            d.flush_string()
+            d.string()
         );
     }
+
     #[test]
     fn macros() {
         let d = TreeBuilder::new();
@@ -110,10 +115,11 @@ mod test {
             "\
 1
 └╼ 1.1",
-            d.flush_string()
+            d.string()
         );
-    }    #[test]
+    }
 
+    #[test]
     fn macros_with_fn() {
         let d = TreeBuilder::new();
         let tree = || d.clone();
@@ -127,17 +133,19 @@ mod test {
             "\
 1
 └╼ 1.1",
-            d.flush_string()
+            d.string()
         );
     }
+
     #[test]
     fn leaf_with_value() {
         let d = TreeBuilder::new();
         let value = add_leaf_value_to!(d, 1);
         d.peek_print();
-        assert_eq!("1", d.flush_string());
+        assert_eq!("1", d.string());
         assert_eq!(1, value);
     }
+
     #[test]
     fn macros2() {
         let d = TreeBuilder::new();
@@ -148,7 +156,7 @@ mod test {
             "\
 1
 └╼ 1.1",
-            d.flush_string()
+            d.string()
         );
     }
 
@@ -174,7 +182,7 @@ mod test {
 │ └╼ 10.1.2
 │    Next line
 └╼ 10.3",
-            d.flush_string()
+            d.string()
         );
     }
 
@@ -186,6 +194,7 @@ mod test {
             }
         }
     }
+
     #[test]
     fn recursive() {
         factors(6);
@@ -198,7 +207,7 @@ mod test {
 │ └╼ 1
 └╼ 3
   └╼ 1",
-            default_tree().flush_string()
+            default_tree().string()
         );
     }
 
@@ -207,10 +216,12 @@ mod test {
         b();
         c();
     }
+
     fn b() {
         add_branch!("b");
         c();
     }
+
     fn c() {
         add_branch!("c");
         add_leaf!("Nothing to see here");
@@ -228,7 +239,7 @@ a
 │   └╼ Nothing to see here
 └╼ c
   └╼ Nothing to see here",
-            default_tree().flush_string()
+            default_tree().string()
         );
     }
 
@@ -241,8 +252,9 @@ a
 
         add_branch_to!(tree, "Branch");
         tree.add_branch("Branch");
-        assert_eq!("", tree.flush_string());
+        assert_eq!("", tree.string());
     }
+
     #[test]
     fn enabled_output() {
         let tree = TreeBuilder::new();
@@ -256,12 +268,299 @@ a
         add_branch_to!(tree, "Branch");
         tree.add_branch("Branch");
         assert_eq!(
-            "\
-Leaf
+            "Leaf
 Leaf
 Branch
 └╼ Branch",
-            tree.flush_string()
+            tree.string()
+        );
+    }
+
+    #[test]
+    fn tree_by_name() {
+        clear("A");
+        let b = tree("B");
+        b.clear();
+        {
+            add_branch_to!("A", "1");
+            add_branch_to!(b, "3");
+            add_leaf_to!("A", "1.1");
+            add_leaf_to!("B", "3.1");
+        }
+        add_leaf_to!("A", "2");
+        peek_print("A");
+        b.peek_print();
+        assert_eq!(
+            "1
+└╼ 1.1
+2",
+            string("A")
+        );
+        assert_eq!(
+            "3
+└╼ 3.1",
+            b.string()
+        );
+    }
+
+    #[test]
+    fn tree_by_name_disabled() {
+        let d = tree("D");
+        d.clear();
+        d.set_enabled(true);
+        clear("C");
+        set_enabled("C", false);
+        {
+            add_branch_to!("C", "1");
+            set_enabled("C", true);
+            add_branch_to!(d, "3");
+            add_leaf_to!("C", "1.1");
+            d.set_enabled(false);
+            add_leaf_to!("D", "3.1");
+        }
+        add_leaf_to!("C", "2");
+        peek_print("C");
+        d.peek_print();
+        assert_eq!(
+            "1.1
+2",
+            string("C")
+        );
+        assert_eq!("3", d.string());
+    }
+
+    #[test]
+    fn defer_write() {
+        let tree = TreeBuilder::new();
+        {
+            create_dir("test_out").ok();
+            remove_file("test_out/defer_write.txt").ok();
+            File::create("test_out/defer_write.txt").unwrap();
+            defer_write!(tree, "test_out/defer_write.txt");
+            tree.add_leaf("Branch");
+            assert_eq!(read_to_string("test_out/defer_write.txt").unwrap(), "");
+            assert_eq!(tree.peek_string(), "Branch");
+        }
+        assert_eq!(tree.peek_string(), "");
+        assert_eq!(
+            read_to_string("test_out/defer_write.txt").unwrap(),
+            "Branch"
+        );
+    }
+
+    #[test]
+    fn defer_peek_write() {
+        let tree = TreeBuilder::new();
+        {
+            create_dir("test_out").ok();
+            remove_file("test_out/defer_peek_write.txt").ok();
+            File::create("test_out/defer_peek_write.txt").unwrap();
+            defer_peek_write!(tree, "test_out/defer_peek_write.txt");
+            tree.add_leaf("Branch");
+            assert_eq!(read_to_string("test_out/defer_peek_write.txt").unwrap(), "");
+            assert_eq!(tree.peek_string(), "Branch");
+        }
+        assert_eq!(tree.peek_string(), "Branch");
+        assert_eq!(
+            read_to_string("test_out/defer_peek_write.txt").unwrap(),
+            "Branch"
+        );
+    }
+
+    #[test]
+    #[should_panic]
+    #[allow(unreachable_code)]
+    fn defer_peek_write_panic() {
+        let tree = TreeBuilder::new();
+        {
+            create_dir("test_out").ok();
+            remove_file("test_out/defer_peek_write_panic.txt").ok();
+            File::create("test_out/defer_peek_write_panic.txt").unwrap();
+            defer_peek_write!(tree, "test_out/defer_peek_write_panic.txt");
+            tree.add_leaf("This should be the only line in this file");
+            assert_eq!(read_to_string("test_out/defer_peek_write.txt").unwrap(), "");
+            assert_eq!(
+                tree.peek_string(),
+                "This should be the only line in this file"
+            );
+            panic!();
+            tree.add_leaf("This line should not exist");
+        }
+    }
+
+    fn example_tree() -> TreeBuilder {
+        let tree = TreeBuilder::new();
+        {
+            add_branch_to!(tree, "1");
+            {
+                add_branch_to!(tree, "1.1");
+                add_leaf_to!(tree, "1.1.1");
+                add_leaf_to!(tree, "1.1.2\nWith two\nextra lines");
+                add_leaf_to!(tree, "1.1.3");
+            }
+            add_branch_to!(tree, "1.2");
+            add_leaf_to!(tree, "1.2.1");
+        }
+        {
+            add_branch_to!(tree, "2");
+            add_leaf_to!(tree, "2.1");
+            add_leaf_to!(tree, "2.2");
+        }
+        add_leaf_to!(tree, "3");
+        tree
+    }
+
+    #[test]
+    fn format_output() {
+        let tree = example_tree();
+        tree.set_config_override(
+            TreeConfig::new()
+                .indent(8)
+                .symbols(TreeSymbols {
+                    continued: "| |",
+                    join_first: "|A|",
+                    join_last: "|Z|",
+                    join_inner: "|N|",
+                    join_only: "|O|",
+                    branch: "123456[NOT SHOWN]",
+                    leaf: ")}>",
+                    multiline_first: Some(")}MULTI>"),
+                    multiline_continued: Some(".. CONTINUED: "),
+                })
+                .show_first_level(),
+        );
+        tree.peek_print();
+        assert_eq!(
+            tree.string(),
+            "\
+|A|123456)}>1
+| |       |A|123456)}>1.1
+| |       | |       |A|123456)}>1.1.1
+| |       | |       |N|123456)}MULTI>1.1.2
+| |       | |       | |      .. CONTINUED: With two
+| |       | |       | |      .. CONTINUED: extra lines
+| |       | |       |Z|123456)}>1.1.3
+| |       |Z|123456)}>1.2
+| |               |O|123456)}>1.2.1
+|N|123456)}>2
+| |       |A|123456)}>2.1
+| |       |Z|123456)}>2.2
+|Z|123456)}>3"
+        );
+    }
+
+    #[test]
+    fn format_output_thick() {
+        let tree = example_tree();
+        tree.set_config_override(
+            TreeConfig::new()
+                .symbols(TreeSymbols::with_thick())
+                .indent(4)
+                .show_first_level(),
+        );
+        tree.peek_print();
+        assert_eq!(
+            tree.string(),
+            "\
+┣━━╼ 1
+┃   ┣━━╼ 1.1
+┃   ┃   ┣━━╼ 1.1.1
+┃   ┃   ┣━━╼ 1.1.2
+┃   ┃   ┃    With two
+┃   ┃   ┃    extra lines
+┃   ┃   ┗━━╼ 1.1.3
+┃   ┗━━╼ 1.2
+┃       ┗━━╼ 1.2.1
+┣━━╼ 2
+┃   ┣━━╼ 2.1
+┃   ┗━━╼ 2.2
+┗━━╼ 3"
+        );
+    }
+
+    #[test]
+    fn format_output_pipes() {
+        let tree = example_tree();
+        tree.set_config_override(
+            TreeConfig::new()
+                .symbols(TreeSymbols::with_pipes())
+                .indent(3)
+                .show_first_level(),
+        );
+        tree.peek_print();
+        assert_eq!(
+            tree.string(),
+            "\
+╠═╼ 1
+║  ╠═╼ 1.1
+║  ║  ╠═╼ 1.1.1
+║  ║  ╠═╼ 1.1.2
+║  ║  ║   With two
+║  ║  ║   extra lines
+║  ║  ╚═╼ 1.1.3
+║  ╚═╼ 1.2
+║     ╚═╼ 1.2.1
+╠═╼ 2
+║  ╠═╼ 2.1
+║  ╚═╼ 2.2
+╚═╼ 3"
+        );
+    }
+
+    #[test]
+    fn format_output_dashed() {
+        let tree = example_tree();
+        tree.set_config_override(
+            TreeConfig::new()
+                .symbols(TreeSymbols::with_dashed().multiline_continued("  > "))
+                .indent(4)
+                .show_first_level(),
+        );
+        tree.peek_print();
+        assert_eq!(
+            tree.string(),
+            "\
+┊╌╌- 1
+┊   ┊╌╌- 1.1
+┊   ┊   ┊╌╌- 1.1.1
+┊   ┊   ┊╌╌- 1.1.2
+┊   ┊   ┊    > With two
+┊   ┊   ┊    > extra lines
+┊   ┊   '╌╌- 1.1.3
+┊   '╌╌- 1.2
+┊       '╌╌- 1.2.1
+┊╌╌- 2
+┊   ┊╌╌- 2.1
+┊   '╌╌- 2.2
+'╌╌- 3"
+        );
+    }
+
+    #[test]
+    fn format_output_rounded() {
+        let tree = example_tree();
+        tree.set_config_override(
+            TreeConfig::new()
+                .symbols(TreeSymbols::with_rounded())
+                .indent(4),
+        );
+        tree.peek_print();
+        assert_eq!(
+            tree.string(),
+            "\
+1
+├──╼ 1.1
+│   ├──╼ 1.1.1
+│   ├──╼ 1.1.2
+│   │    With two
+│   │    extra lines
+│   ╰──╼ 1.1.3
+╰──╼ 1.2
+    ╰──╼ 1.2.1
+2
+├──╼ 2.1
+╰──╼ 2.2
+3"
         );
     }
 }

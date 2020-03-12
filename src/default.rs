@@ -34,8 +34,8 @@ pub fn default_tree() -> TreeBuilder {
 #[macro_export]
 macro_rules! add_leaf {
         ($($arg:tt)*) => {
-            if $crate::default_tree().is_enabled() {
-                $crate::default_tree().add_leaf(&format!($($arg)*))
+            if $crate::default::default_tree().is_enabled() {
+                $crate::default::default_tree().add_leaf(&format!($($arg)*))
             }
         };
     }
@@ -54,7 +54,7 @@ macro_rules! add_leaf {
 /// use debug_tree::{default_tree, add_leaf_value};
 /// fn main() {
 ///     let value = add_leaf_value!(10);
-///     assert_eq!("10", &default_tree().flush_string());
+///     assert_eq!("10", &default_tree().string());
 ///     assert_eq!(10, value);
 /// }
 /// ```
@@ -62,8 +62,8 @@ macro_rules! add_leaf {
 macro_rules! add_leaf_value {
     ($value:expr) => {{
         let v = $value;
-        if $crate::default_tree().is_enabled() {
-            $crate::default_tree().add_leaf(&format!("{}", &v));
+        if $crate::default::default_tree().is_enabled() {
+            $crate::default::default_tree().add_leaf(&format!("{}", &v));
         }
         v
     }};
@@ -91,21 +91,21 @@ macro_rules! add_leaf_value {
 ///     assert_eq!("\
 /// New Branch
 /// └╼ Child of Branch
-/// Sibling of Branch" , &default_tree().flush_string());
+/// Sibling of Branch" , &default_tree().string());
 /// }
 /// ```
 #[macro_export]
 macro_rules! add_branch {
     () => {
-        let _debug_tree_branch = if $crate::default_tree().is_enabled() {
-            $crate::default_tree().enter_scoped()
+        let _debug_tree_branch = if $crate::default::default_tree().is_enabled() {
+            $crate::default::default_tree().enter_scoped()
         } else {
             $crate::scoped_branch::ScopedBranch::none()
         };
     };
     ($($arg:tt)*) => {
-        let _debug_tree_branch = if $crate::default_tree().is_enabled() {
-            $crate::default_tree().add_branch(&format!($($arg)*))
+        let _debug_tree_branch = if $crate::default::default_tree().is_enabled() {
+            $crate::default::default_tree().add_branch(&format!($($arg)*))
         } else {
             $crate::scoped_branch::ScopedBranch::none()
         };
@@ -135,7 +135,7 @@ mod test {
 ├╼ 1.1
 │ └╼ 1.1.1
 └╼ 1.2",
-            default_tree().flush_string()
+            default_tree().string()
         );
     }
     #[test]
@@ -153,7 +153,7 @@ mod test {
 ├╼ 11.1
 │ └╼ 11.1.1
 └╼ 11.2",
-            default_tree().flush_string()
+            default_tree().string()
         );
     }
 
@@ -161,8 +161,7 @@ mod test {
     fn leaf_with_value() {
         let value = add_leaf_value!(10);
         default_tree().peek_print();
-        assert_eq!("10", default_tree().flush_string());
+        assert_eq!("10", default_tree().string());
         assert_eq!(10, value);
     }
-
 }
