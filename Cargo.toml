@@ -4,7 +4,7 @@ version = "0.3.0"
 authors = ["Marty Papamanolis <marty@mindpipess.com>"]
 edition = "2018"
 repository = "https://github.com/martypapa/debug-tree"
-readme = "README.md"
+readme = "README.adoc"
 license = "MIT"
 description = "Build a tree one element at a time and output it as a pretty string."
 
