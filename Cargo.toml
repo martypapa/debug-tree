@@ -1,6 +1,6 @@
 [package]
 name = "debug_tree"
-version = "0.3.0"
+version = "0.3.1"
 authors = ["Marty Papamanolis <marty@mindpipess.com>"]
 edition = "2018"
 repository = "https://github.com/martypapa/debug-tree"
@@ -14,3 +14,7 @@ crate-type = ["lib"]
 
 [dependencies]
 once_cell = "~1.3.1"
+
+[dev-dependencies]
+tokio = {version = "0.2.9", features = ["macros", "fs"] }
+futures = "0.3.4"

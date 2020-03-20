@@ -56,7 +56,7 @@ impl Tree {
         };
         let position = match index {
             _ if pool_size == 1 => Position::Only,
-            _ if index == pool_size - 1 => Position::Last,
+            _ if (index + 1) == pool_size => Position::Last,
             0 => Position::First,
             _ => Position::Inside,
         };
@@ -191,7 +191,7 @@ impl TreeBuilderBase {
             for i in 0..dive_count {
                 let mut n = 0;
                 if let Some(x) = self.data.lock().unwrap().at_mut(&self.path) {
-                    x.children.push(Tree::new(if i == dive_count - 1 {
+                    x.children.push(Tree::new(if i == max(1, dive_count) - 1 {
                         Some(&text)
                     } else {
                         None
@@ -206,7 +206,7 @@ impl TreeBuilderBase {
                 .data
                 .lock()
                 .unwrap()
-                .at_mut(&self.path[..self.path.len() - 1])
+                .at_mut(&self.path[..max(1, self.path.len()) - 1])
             {
                 x.children.push(Tree::new(Some(&text)));
                 let n = match self.path.last() {
@@ -250,7 +250,7 @@ impl TreeBuilderBase {
     }
 
     pub fn depth(&self) -> usize {
-        self.path.len() + self.dive_count - 1
+        max(1, self.path.len() + self.dive_count) - 1
     }
 
     pub fn peek_print(&self) {

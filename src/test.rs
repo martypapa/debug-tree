@@ -1,6 +1,8 @@
 #[cfg(test)]
 mod test {
     use crate::*;
+    use futures::future::join5;
+    use std::cmp::{max, min};
     use std::fs::{create_dir, read_to_string, remove_file};
 
     #[test]
@@ -562,5 +564,33 @@ Branch
 ╰──╼ 2.2
 3"
         );
+    }
+
+    async fn wait_a_bit(tree: TreeBuilder, index: usize) {
+        tree.print();
+        add_branch_to!(tree, "inside async branch {}", index);
+        tree.print();
+        add_leaf_to!(tree, "inside async leaf {}", index);
+        tree.print();
+    }
+
+    #[tokio::test]
+    async fn async_barrier() {
+        let tree = TreeBuilder::new();
+        defer_peek_print!(tree);
+        add_branch_to!(tree, "root");
+        add_leaf_to!(tree, "before async");
+
+        let x2 = wait_a_bit(tree.clone(), 4);
+        let x1 = wait_a_bit(tree.clone(), 5);
+        let x3 = wait_a_bit(tree.clone(), 3);
+        let x4 = wait_a_bit(tree.clone(), 2);
+        let x5 = wait_a_bit(tree.clone(), 1);
+
+        add_leaf_to!(tree, "before join async");
+
+        join5(x1, x2, x3, x4, x5).await;
+        add_leaf_to!(tree, "after join async");
+        assert_eq!(tree.peek_string(), "after join async");
     }
 }
