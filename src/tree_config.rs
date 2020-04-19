@@ -168,7 +168,7 @@ impl TreeConfig {
         self
     }
     pub fn hide_first_level(mut self) -> Self {
-        self.show_first_level = true;
+        self.show_first_level = false;
         self
     }
     pub fn symbols(mut self, x: TreeSymbols) -> Self {
