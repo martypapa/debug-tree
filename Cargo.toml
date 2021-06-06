@@ -1,10 +1,10 @@
 [package]
 name = "debug_tree"
-version = "0.3.1"
+version = "0.4.0"
 authors = ["Marty Papamanolis <marty@mindpipess.com>"]
 edition = "2018"
 repository = "https://github.com/martypapa/debug-tree"
-readme = "README.adoc"
+readme = "README.md"
 license = "MIT"
 description = "Build a tree one element at a time and output it as a pretty string."
 
@@ -13,7 +13,7 @@ name = "debug_tree"
 crate-type = ["lib"]
 
 [dependencies]
-once_cell = "~1.3.1"
+once_cell = "1"
 
 [dev-dependencies]
 tokio = {version = "0.2.9", features = ["macros", "fs"] }
